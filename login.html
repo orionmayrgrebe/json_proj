@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  </head>
+  <style>
+    #logout {
+      width:20px;
+      height:20px;
+    }
+    #title {
+      position: absolute;
+      top:175px;
+      left:565px;
+    }
+    #form {
+      position:absolute;
+      top:250px;
+      left:525px;
+      font-size:14px;
+    }
+    #Failure {
+      width: 150px;
+      padding-left:50px;
+      display:none;
+    }
+    #welcome {
+      margin-left: 200px;
+      text-align: center;
+      margin-top:10px;
+      display:none;
+    }
+    #padding {
+      margin-bottom:30px;
+    }
+    #submit {
+      margin-top: 10px;
+      margin-left:50px;
+    }
+    #username, #password {
+      text-align: center;
+    }
+  </style>
+  <body>
+    <h2 id = "title">Login</h2>
+    <p id = "padding">
+    <p id = "Failure">Failed to login, try again</p>
+    <form id = "form" method = "POST" action = "/sendLoginDetails">
+      <input type = "text" id = "username" name = "user" placeholder = "Username" required>
+      <br>
+      <input type = "password" id = "password" name = "password" placeholder = "Password" required>
+      <br>
+      <input id="submit" type = "submit" onclick = "success()">
+    </form>
+  </body>
+  <script>
+    var http = new XMLHttpRequest();
+    const url = "/getSuccess";
+    http.open("GET", url, true);
+    http.send();
+    http.onreadystatechange = function() {
+      if(this.readyState == 4) {
+        if(this.responseText == "false") {
+          document.getElementById("Failure").style.display = "block";
+        } else if(this.responseText == "true") {
+          window.location.replace("/contacts");
+        } else if(this.responseText == "load") {
+          document.getElementById("Failure").style.display = "none";
+        }
+      }
+    }
+  </script>
+</html>

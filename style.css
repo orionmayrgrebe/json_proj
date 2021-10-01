@@ -1,0 +1,40 @@
+#logout {
+  width:20px;
+  height:20px;
+}
+#welcome {
+  margin-left: 200px;
+  margin-top:15px;
+  display:none;
+}
+#logout {
+  width:20px;
+  height:20px;
+}
+#title {
+  position: absolute;
+  top:175px;
+  left:565px;
+}
+#form {
+  position:absolute;
+  top:250px;
+  left:500px;
+  font-size:14px;
+}
+#Failure {
+  width: 150px;
+  padding-left:50px;
+  display:none;
+}
+#padding {
+  margin-bottom:30px;
+}
+#submit {
+  margin-top: 10px;
+  margin-left:70px;
+}
+#username, #password {
+  text-align: center;
+  margin-left:50px;
+}

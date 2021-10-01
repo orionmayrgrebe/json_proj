@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  </head>
+  <style>
+    #logout {
+      width:20px;
+      height:20px;
+    }
+    #Failure {
+      padding-left:50px;
+      display:none;
+    }
+    #FailureUsr {
+      padding-left:50px;
+      display:none;
+    }
+    #user {
+      margin-bottom:15px;
+      margin-left:10px;
+    }
+    #adminTable {
+      width:400px;
+      margin-left: 10px;
+      border-color:black;
+      border-collapse: collapse;
+      border-spacing:12px;
+      background-color: #D3D3D0;
+      border-style: solid;
+    }
+    th, td {
+      border: 2px solid;
+    }
+    #welcome {
+      margin-left: 200px;
+      margin-top:15px;
+      display:none;
+    }
+  </style>
+  <body>
+      <nav class="navbar navbar-default">
+          <div class="container-fluid">
+              <ul class="nav navbar-nav">
+                  <li><a href="/contacts"><b>Contact</b></a></li>
+                  <li><a href="/addContact"><b>Add Contact</b></a></li>
+                  <li><a href="/stock"><b>Stocks</b></a></li>
+                  <li><a href="/admin"><b>Admin</b></a></li>
+                  <li id = "logout"><a href="/logout"><img id = "logout" src = "https://image.flaticon.com/icons/png/512/126/126467.png"></a></li>
+                  <li id = "welcome"></li>
+              </ul>
+          </div>
+    </nav>
+    <p id = "Failure">Error! Cannot delete logged in user!</p>
+    <p id = "FailureUsr">Error! Cannot use the same login ID or username as another user!</p>
+    <button id = "user" onclick="addUser()">Add User</button>
+    <table class = 'table' id = 'adminTable'>
+      <th>ID</th>
+      <th>User</th>
+      <th>Password</th>
+      <th> </th>
+    </table>
+  </body>
+  <script>
+    // action variable keeps track if we are currently editing users. we do not let a user edit/add more than one entry at a time.
+    var action = 0;
+    var addition = 0;
+    // save the rows of the table
+    var rows = new Array();
+    var old_html = document.getElementById("adminTable").innerHTML;
+    // returns the users for the client
+    function getUsers() {
+      var http = new XMLHttpRequest();
+      var out = "<table class = 'table' id = 'adminTable'><th>ID</th><th>User</th><th>Password</th><th> </th></table>"
+      const url = "/getUsers";
+      http.open("GET", url, true);
+      http.send();
+      http.onreadystatechange = function() {
+        if(this.readyState == 4) {
+          var myArr = JSON.parse(this.responseText);
+          var row = 0;
+          for(var i = 0; i < myArr.length; i++) {
+            var new_row = '<tr id = ' + i + '><td id = "' + i + 'id">'+ myArr[i].acc_id +
+            '</td><td id = "' + i + 'name">' + myArr[i].acc_name +
+            '</td><td id = "' + i + 'pass">' +  " " +
+            '</td><td id = "' + i + 'button"><button onclick="editUser(' + i + ')">Edit</button><button onclick="deleteUser(' +
+            i +')">Delete</button></a></td></tr>';
+            out += new_row;
+            rows.push(new_row);
+          }
+          document.getElementById("adminTable").innerHTML = out;
+        }
+        old_html = out;
+      }
+    }
+    // function used on all pages. requests the name of the currently logged in user.
+    function getLoggedIn() {
+      var http = new XMLHttpRequest();
+      const url = "/getLoggedInUser";
+      http.open("GET", url, true);
+      http.send();
+      http.onreadystatechange = function() {
+        if(this.readyState == 4) {
+          console.log(this.responseText);
+          if(this.responseText != 'false') {
+            document.getElementById("welcome").innerHTML = "Welcome, " + this.responseText + "!"
+            document.getElementById("welcome").style.display = "block";
+          } else {
+            document.getElementById("welcome").stlye.display = "none";
+          }
+        }
+      }
+    }
+    window.addEventListener('load', getLoggedIn, false);
+    window.addEventListener('load', getUsers, false);
+    // edits a user.
+    function editUser(row) {
+      // checks if we are currently editing/adding
+      if(action == 0) {
+        // if not, increment action
+        action++;
+        // allow name and password to be changed
+        document.getElementById(row + 'name').contentEditable = true;
+        document.getElementById(row + 'pass').contentEditable = true;
+        // change the buttons
+        var out = '<button onclick="saveUser(' + row + ')">Save</button><button  onclick="cancelEdit('+ row + ')">Cancel</button>';
+        // change the css
+        document.getElementById(row + "button").innerHTML = out;
+        document.getElementById(row + 'name').style.backgroundColor = "white";
+        document.getElementById(row + 'pass').style.backgroundColor = "white";
+      }
+    }
+    function addUser() {
+      if(action == 0) {
+        //allows a user to be last_added
+        // get the table
+        var out = document.getElementById("adminTable").innerHTML;
+        //get the id of the last added element
+        var last_added_id = document.getElementById((rows.length-1) + "id").innerHTML;
+        // format row
+        // the buttons will call the saveuser and deleteAdd() functions as need be. if a user is
+        // edited after it has been added, the deleteAdd() function changes to just deleteUser()
+        var newRow = '<tr id = ' + rows.length + '><td id = "' + rows.length + 'id">' + (parseInt(last_added_id)+1) +
+        '</td><td id = "' + rows.length + 'name">' +
+        '</td><td id = "' + rows.length + 'pass">' +
+        '</td><td id = "' + rows.length + 'button"><button onclick="saveUser(' + rows.length +
+        ')">Save</button><button onclick="deleteAdd()">Cancel</button></td></tr>';
+        // add to rows array
+        rows.push(newRow);
+        // add to table info
+        out += newRow;
+        var row = rows.length - 1;
+        // update table info
+        document.getElementById("adminTable").innerHTML = out;
+        // make info editable
+        document.getElementById(row + 'name').contentEditable = true;
+        document.getElementById(row + 'pass').contentEditable = true;
+        document.getElementById(row + 'name').style.backgroundColor = "white";
+        document.getElementById(row + 'pass').style.backgroundColor = "white";
+        if(addition == 0) {
+          addition++;
+        } else {
+          old_html += newRow;
+        }
+        action++;
+      }
+    }
+    function deleteUser(row) {
+      var user = 'username=' + document.getElementById(row + "name").innerHTML;
+      var new_rows = new Array();
+      var user_ = document.getElementById(row + "name").innerHTML;
+      for(var i = 0; i < rows.length; i++) {
+        var old_user = rows[i].split('name">');
+        var o_user = old_user[1].split("</td>")
+        if(!o_user == user_) {
+          new_rows.push(rows[i]);
+        }
+      }
+      rows = new_rows;
+      var delete_http = new XMLHttpRequest();
+      const url = "/deleteUser";
+      delete_http.open("POST", url, true);
+      delete_http.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+      delete_http.onreadystatechange = function() {
+        if(this.readyState == 4) {
+          if(this.responseText == "true") {
+            document.getElementById("Failure").style.display = "block";
+          } else {
+            document.getElementById("Failure").style.display = "none";
+            getUsers();
+          }
+        }
+      }
+      delete_http.send(user);
+    }
+    function saveUser(row) {
+        var out = '<td id = "' + row + 'button"><button onclick="editUser(' + row + ')">Edit</button><button onclick="deleteUser(' +
+        row +')">Delete</button></a></td>';
+        document.getElementById(row + "button").innerHTML = out;
+        var newID = document.getElementById(row + 'id').innerHTML;
+        var newName = document.getElementById(row + 'name').innerHTML;
+        var newPass = document.getElementById(row + 'pass').innerHTML;
+        var msg = 'id=' + newID + "&name=" + newName + "&password=" + newPass;
+        var save_http = new XMLHttpRequest();
+        const url = '/saveUser';
+        save_http.open("POST", url, true);
+        save_http.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+        save_http.onreadystatechange = function() {
+          if(this.readyState == 4) {
+            if(this.responseText == "true") {
+              document.getElementById("FailureUsr").style.display = "block";
+              cancelEdit(row);
+            } else {
+              document.getElementById("FailureUsr").style.display = "none";
+              rows[row] = document.getElementById(row).innerHTML;
+            }
+          }
+        }
+        save_http.send(msg);
+        document.getElementById(row + 'name').contentEditable = false;
+        document.getElementById(row + 'pass').contenteditable = false;
+        document.getElementById(row + 'name').style.backgroundColor = "#D3D3D3";
+        document.getElementById(row + 'pass').style.backgroundColor = "#D3D3D3";
+        document.getElementById(row + "pass").innerHTML = " ";
+        action = 0;
+    }
+    function cancelEdit(row) {
+      document.getElementById(row + 'name').contentEditable = false;
+      document.getElementById(row + 'pass').contenteditable = false;
+      document.getElementById(row).innerHTML = rows[row];
+      action = 0;
+    }
+    function deleteAdd() {
+      action = 0;
+      addition--;
+      rows.pop();
+      document.getElementById("adminTable").innerHTML = old_html;
+    }
+  </script>
+
+</html>

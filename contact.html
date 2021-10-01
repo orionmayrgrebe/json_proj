@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  </head>
+  <style>
+    #logout {
+      width:20px;
+      height:20px;
+    }
+    #welcome {
+      margin-left: 200px;
+      margin-top:15px;
+      display:none;
+    }
+  </style>
+  <body>
+      <nav class="navbar navbar-default">
+          <div class="container-fluid">
+              <ul class="nav navbar-nav">
+                  <li><a href="/contacts"><b>Contact</b></a></li>
+                  <li><a href="/addContact"><b>Add Contact</b></a></li>
+                  <li><a href="/stock"><b>Stocks</b></a></li>
+                  <li><a href="/admin"><b>Admin</b></a></li>
+                  <li id = "logout"><a href="/logout"><img id = "logout" src = "https://image.flaticon.com/icons/png/512/126/126467.png"></a></li>
+                  <li id = "welcome"></li>
+              </ul>
+          </div>
+    </nav><br><br><br>
+    <div class = "container">
+      <table class = "table" id = "contactTable">
+        <th>Name</th>
+        <th>Email</th>
+        <th>Address</th>
+        <th>Phone Number</th>
+        <th>Favorite Place</th>
+      </table>
+    </div>
+
+  </body>
+  <script>
+    var http = new XMLHttpRequest();
+    const url = "/getListOfContacts";
+    var out = document.getElementById("contactTable").innerHTML;
+    http.open("GET", url, true);
+    http.send();
+    http.onreadystatechange = function() {
+      if(this.readyState == 4) {
+        var myArr = JSON.parse(this.responseText);
+        for(var i = 0; i < myArr.length; i++) {
+          out += '<br><tr><td>'+ myArr[i].contact_name +
+          '</td><td>' + myArr[i].contact_email +
+          '</td><td>' + myArr[i].contact_address +
+          '</td><td>' + myArr[i].contact_phone +
+          '</td><td><a href=' + myArr[i].contact_favoriteplaceurl +
+          '>' + myArr[i].contact_favoriteplace + '</a></td></tr>';
+        }
+      }
+      document.getElementById("contactTable").innerHTML = out;
+    }
+    function getLoggedIn() {
+      var http = new XMLHttpRequest();
+      const url = "/getLoggedInUser";
+      http.open("GET", url, true);
+      http.send();
+      http.onreadystatechange = function() {
+        if(this.readyState == 4) {
+          console.log(this.responseText);
+          if(this.responseText != 'false') {
+            document.getElementById("welcome").innerHTML = "Welcome, " + this.responseText + "!"
+            document.getElementById("welcome").style.display = "block";
+          } else {
+            document.getElementById("welcome").stlye.display = "none";
+          }
+        }
+      }
+    }
+    window.addEventListener('load', getLoggedIn, false);
+  </script>
+  </html>
